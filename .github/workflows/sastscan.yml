@@ -1,1 +1,39 @@
+name: SAST scan autheticated with semgrep python installation
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
+jobs:
+  semgrep-full:
+    runs-on: ubuntu-latest
+    steps:
+    
+    #step2: Checkout Code.
+      - name: clone application source code
+        uses: actions/checkout@v4
+
+    
+      #step3: Install Semgrep
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          python3 -m pip install semgrep
+      
+      #step4: Code scan
+      - name: Scan
+        run: |
+          semgrep --config "p/ci" --config auto . --output $(date +"%d-%m-%Y").json --json > scanSummry.txt 2>&1
+
+      #step5: get current date  
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%d-%m-%Y')"
+
+      #step6: Push report to artifact.
+      - name: save report as pipeline artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: ${{ steps.date.outputs.date }}.json
+            path: .
